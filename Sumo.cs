@@ -39,6 +39,7 @@ public partial class Sumo : Node2D
     private RandomNumberGenerator rng = new RandomNumberGenerator();
     private Texture2D p1Texture;
     private Texture2D p2Texture;
+    private Texture2D professorTexture;
 
     public override void _Ready()
     {
@@ -47,6 +48,7 @@ public partial class Sumo : Node2D
         p2CorrectDoor = rng.RandiRange(0, 1) == 0;
         p1Texture = GD.Load<Texture2D>("res://sumo_player1.png");
         p2Texture = GD.Load<Texture2D>("res://sumo_player2.png");
+        professorTexture = GD.Load<Texture2D>("res://professor2.png");
     }
 
     public override void _Process(double delta)
@@ -193,28 +195,17 @@ public partial class Sumo : Node2D
         // Papers
         DrawRect(new Rect2(cx - 60, py - 22, 35, 22), new Color(0.95f, 0.95f, 0.85f, 0.9f));
         DrawRect(new Rect2(cx + 15, py - 22, 28, 20), new Color(0.9f, 0.9f, 0.8f, 0.85f));
-        // Body
-        DrawRect(new Rect2(cx - 22, py - 82, 44, 60), new Color(0.15f, 0.1f, 0.3f, 1f));
-        DrawRect(new Rect2(cx - 5, py - 78, 10, 38), new Color(0.8f, 0.1f, 0.1f, 1f));
-        // Arms folded on desk
-        DrawRect(new Rect2(cx - 55, py - 36, 40, 13), new Color(0.15f, 0.1f, 0.3f, 1f));
-        DrawRect(new Rect2(cx + 15, py - 36, 40, 13), new Color(0.15f, 0.1f, 0.3f, 1f));
-        DrawCircle(new Vector2(cx - 16, py - 30), 8f, new Color(0.85f, 0.7f, 0.55f, 1f));
-        DrawCircle(new Vector2(cx + 16, py - 30), 8f, new Color(0.85f, 0.7f, 0.55f, 1f));
-        // Head
-        DrawCircle(new Vector2(cx, py - 96), 22f, new Color(0.85f, 0.7f, 0.55f, 1f));
-        // Hair
-        DrawRect(new Rect2(cx - 22, py - 118, 44, 12), new Color(0.25f, 0.15f, 0.05f, 1f));
-        // Angry eyebrows
-        DrawLine(new Vector2(cx - 16, py - 108), new Vector2(cx - 4, py - 103), new Color(0.15f, 0.08f, 0f, 1f), 3f);
-        DrawLine(new Vector2(cx + 4, py - 103), new Vector2(cx + 16, py - 108), new Color(0.15f, 0.08f, 0f, 1f), 3f);
-        // Glasses
-        DrawRect(new Rect2(cx - 18, py - 102, 13, 8), new Color(0.1f, 0.1f, 0.1f, 0.8f));
-        DrawRect(new Rect2(cx + 5, py - 102, 13, 8), new Color(0.1f, 0.1f, 0.1f, 0.8f));
-        DrawLine(new Vector2(cx - 5, py - 98), new Vector2(cx + 5, py - 98), new Color(0.1f,0.1f,0.1f,1f), 2f);
-        // Angry mouth (frown)
-        DrawLine(new Vector2(cx - 10, py - 80), new Vector2(cx, py - 84), new Color(0.3f, 0.1f, 0f, 1f), 2f);
-        DrawLine(new Vector2(cx, py - 84), new Vector2(cx + 10, py - 80), new Color(0.3f, 0.1f, 0f, 1f), 2f);
+        // Professor sprite
+        if (professorTexture != null)
+        {
+            float pw = 110f;
+            float ph = pw * (professorTexture.GetHeight() / (float)professorTexture.GetWidth());
+            DrawTextureRect(professorTexture, new Rect2(cx - pw/2f, py - ph - 30f, pw, ph), false);
+        }
+        else
+        {
+            DrawCircle(new Vector2(cx, py - 96), 22f, new Color(0.85f, 0.7f, 0.55f, 1f));
+        }
         // Speech bubble "DETENTION!"
         DrawRect(new Rect2(cx + 26, py - 130, 100, 26), new Color(1f, 1f, 1f, 0.95f));
         DrawRect(new Rect2(cx + 26, py - 130, 100, 26), new Color(0.8f, 0.1f, 0.1f, 0.4f));
