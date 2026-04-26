@@ -31,8 +31,10 @@ public partial class Basketball : Node2D
 
     private int score1 = 0;
     private int score2 = 0;
-    private float timeLeft = 60f;
+    private float timeLeft = 45f;
     private bool gameOver = false;
+    private int overtimeCount = 0;
+    private bool inOvertime = false;
 
     private float flash1Timer = 0f;
     private float flash2Timer = 0f;
@@ -43,6 +45,7 @@ public partial class Basketball : Node2D
     private bool p2Holding = false;
 
     private Texture2D player1Texture;
+    private Texture2D courtTexture;
     private Texture2D player2Texture;
     private Texture2D ballTexture;
 
@@ -51,6 +54,7 @@ public partial class Basketball : Node2D
         ball1X = player1X; ball1Y = player1Y - 40f;
         ball2X = player2X; ball2Y = player2Y - 40f;
         player1Texture = GD.Load<Texture2D>("res://player1.png");
+        courtTexture = GD.Load<Texture2D>("res://basketball_court.png");
         player2Texture = GD.Load<Texture2D>("res://player2.png");
         ballTexture = GD.Load<Texture2D>("res://basketball.png");
     }
@@ -74,7 +78,10 @@ public partial class Basketball : Node2D
         {
             timeLeft = 0f;
             gameOver = true;
-            GameManager.Instance.RoundWinner = score1 >= score2 ? 1 : 2;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RoundWinner = score1 >= score2 ? 1 : 2;
+            }
             GetTree().ChangeSceneToFile("res://RoundResult.tscn");
             return;
         }
@@ -209,7 +216,9 @@ public partial class Basketball : Node2D
 
     private void DrawBall(float bx, float by)
     {
-        float size = ballRadius * 2.4f;
+        float size = ballRadius * 2.8f;
+        // Shadow
+        DrawCircle(new Vector2(bx + 3, by + 3), size/2f, new Color(0f,0f,0f,0.4f));
         if (ballTexture != null)
             DrawTextureRect(ballTexture, new Rect2(bx - size/2f, by - size/2f, size, size), false);
         else
@@ -218,8 +227,13 @@ public partial class Basketball : Node2D
 
     public override void _Draw()
     {
-        DrawRect(new Rect2(0, 0, 640, 720), new Color(0.18f, 0.0f, 0.35f, 1f));
-        DrawRect(new Rect2(640, 0, 640, 720), new Color(0.15f, 0.0f, 0.28f, 1f));
+        if (courtTexture != null)
+            DrawTextureRect(courtTexture, new Rect2(0, 0, 1280, 720), false);
+        else
+        {
+            DrawRect(new Rect2(0, 0, 640, 720), new Color(0.18f, 0.0f, 0.35f, 1f));
+            DrawRect(new Rect2(640, 0, 640, 720), new Color(0.15f, 0.0f, 0.28f, 1f));
+        }
 
         DrawRect(new Rect2(0, 0, 8, 500), new Color(1f, 0.84f, 0f, 0.7f));
         DrawRect(new Rect2(0, 0, 640, 8), new Color(1f, 0.84f, 0f, 0.7f));
@@ -228,14 +242,9 @@ public partial class Basketball : Node2D
         DrawRect(new Rect2(640, 0, 640, 8), new Color(1f, 0.84f, 0f, 0.7f));
         DrawRect(new Rect2(1272, 0, 8, 500), new Color(1f, 0.84f, 0f, 0.7f));
 
-        DrawRect(new Rect2(0, 500, 640, 220), new Color(0.55f, 0.27f, 0.08f, 1f));
-        DrawRect(new Rect2(640, 500, 640, 220), new Color(0.5f, 0.24f, 0.07f, 1f));
-        DrawLine(new Vector2(8, 500), new Vector2(632, 500), new Color(1,1,1,0.3f), 3f);
-        DrawLine(new Vector2(648, 500), new Vector2(1272, 500), new Color(1,1,1,0.3f), 3f);
-        DrawArc(new Vector2(320, 500), 110f, Mathf.Pi, 2*Mathf.Pi, 32, new Color(1,1,1,0.2f), 2f);
-        DrawArc(new Vector2(960, 500), 110f, Mathf.Pi, 2*Mathf.Pi, 32, new Color(1,1,1,0.2f), 2f);
+        // Court background handles the floor
 
-        DrawRect(new Rect2(635, 0, 10, 720), new Color(1f, 0.84f, 0f, 1f));
+        // Divider handled by court image
 
         DrawHoop(hoop1X, hoopY, flash1Timer > 0);
         DrawHoop(hoop2X, hoopY, flash2Timer > 0);
@@ -285,27 +294,42 @@ public partial class Basketball : Node2D
         if (flash2Timer > 0)
             DrawString(ThemeDB.FallbackFont, new Vector2(870, 160), "+1", HorizontalAlignment.Left, -1, 80, new Color(1f,1f,0f, flash2Timer/0.8f));
 
-        DrawString(ThemeDB.FallbackFont, new Vector2(50, 50), "Dane 1", HorizontalAlignment.Left, -1, 22, new Color(1,1,1,0.8f));
-        DrawString(ThemeDB.FallbackFont, new Vector2(50, 110), $"{score1}", HorizontalAlignment.Left, -1, 52, new Color(1f, 0.84f, 0f, 1f));
-        DrawString(ThemeDB.FallbackFont, new Vector2(730, 50), "Dane 2", HorizontalAlignment.Left, -1, 22, new Color(1,1,1,0.8f));
-        DrawString(ThemeDB.FallbackFont, new Vector2(730, 110), $"{score2}", HorizontalAlignment.Left, -1, 52, new Color(1f, 0.84f, 0f, 1f));
+        // === DANE 1 HUD BOX (top left) ===
+        DrawRect(new Rect2(10, 10, 180, 65), new Color(0f, 0f, 0f, 0.75f));
+        DrawRect(new Rect2(10, 10, 180, 5), new Color(0.29f, 0f, 0.51f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(20, 38), "DANE 1", HorizontalAlignment.Left, -1, 18, new Color(1f,1f,1f,0.9f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(20, 68), $"{score1}", HorizontalAlignment.Left, -1, 38, new Color(1f, 0.84f, 0f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(20, 82), "Hold F + release", HorizontalAlignment.Left, -1, 12, new Color(1f,1f,1f,0.5f));
 
+        // === ROUND 1 CENTER BOX ===
         int secs = Mathf.CeilToInt(timeLeft);
-        Color timerColor = secs <= 10 ? new Color(1f,0.2f,0.2f,1f) : new Color(1f,1f,1f,1f);
-        DrawString(ThemeDB.FallbackFont, new Vector2(575, 60), $"{secs}s", HorizontalAlignment.Left, -1, 36, timerColor);
-        DrawString(ThemeDB.FallbackFont, new Vector2(540, 25), "ROUND 1", HorizontalAlignment.Left, -1, 20, new Color(1f,0.84f,0f,0.9f));
-        DrawString(ThemeDB.FallbackFont, new Vector2(80, 712), "Hold F + release to shoot", HorizontalAlignment.Left, -1, 17, new Color(1,1,1,0.6f));
-        DrawString(ThemeDB.FallbackFont, new Vector2(720, 712), "Hold J + release to shoot", HorizontalAlignment.Left, -1, 17, new Color(1,1,1,0.6f));
+        Color timerColor = secs <= 10 ? new Color(1f, 0.2f, 0.2f, 1f) : new Color(1f, 1f, 1f, 1f);
+        DrawRect(new Rect2(490, 10, 300, 65), new Color(0f, 0f, 0f, 0.75f));
+        DrawRect(new Rect2(490, 10, 300, 5), new Color(1f, 0.84f, 0f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(560, 38), "ROUND 1", HorizontalAlignment.Left, -1, 18, new Color(1f, 0.84f, 0f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(610, 68), $"{secs}s", HorizontalAlignment.Left, -1, 32, timerColor);
+
+        // === DANE 2 HUD BOX (top right) ===
+        DrawRect(new Rect2(1090, 10, 180, 65), new Color(0f, 0f, 0f, 0.75f));
+        DrawRect(new Rect2(1090, 10, 180, 5), new Color(1f, 0.84f, 0f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(1100, 38), "DANE 2", HorizontalAlignment.Left, -1, 18, new Color(1f,1f,1f,0.9f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(1100, 68), $"{score2}", HorizontalAlignment.Left, -1, 38, new Color(1f, 0.84f, 0f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(1100, 82), "Hold J + release", HorizontalAlignment.Left, -1, 12, new Color(1f,1f,1f,0.5f));
     }
 
     private void DrawHoop(float hx, float hy, bool lit)
     {
         Color rimColor = lit ? new Color(1f,1f,0.2f,1f) : new Color(1f,0.35f,0.05f,1f);
-        DrawRect(new Rect2(hx - 55, hy - 55, 110, 8), new Color(0.85f,0.85f,0.85f,1f));
+        DrawRect(new Rect2(hx - 58, hy - 58, 116, 14), new Color(1f,1f,1f,0.4f));
+        DrawRect(new Rect2(hx - 55, hy - 55, 110, 10), new Color(0.95f,0.95f,0.95f,1f));
         DrawLine(new Vector2(hx, hy - 47), new Vector2(hx, hy - 4), new Color(0.6f,0.6f,0.6f,1f), 3f);
-        DrawLine(new Vector2(hx - rimRadius, hy), new Vector2(hx + rimRadius, hy), rimColor, 5f);
-        DrawCircle(new Vector2(hx - rimRadius, hy), 5f, rimColor);
-        DrawCircle(new Vector2(hx + rimRadius, hy), 5f, rimColor);
+        // Glow effect behind rim
+        DrawLine(new Vector2(hx - rimRadius, hy), new Vector2(hx + rimRadius, hy), new Color(1f,1f,1f,0.3f), 10f);
+        DrawLine(new Vector2(hx - rimRadius, hy), new Vector2(hx + rimRadius, hy), rimColor, 6f);
+        DrawCircle(new Vector2(hx - rimRadius, hy), 8f, new Color(1f,1f,1f,0.5f));
+        DrawCircle(new Vector2(hx - rimRadius, hy), 6f, rimColor);
+        DrawCircle(new Vector2(hx + rimRadius, hy), 8f, new Color(1f,1f,1f,0.5f));
+        DrawCircle(new Vector2(hx + rimRadius, hy), 6f, rimColor);
         int segments = 6;
         float netBottom = hy + 32f;
         for (int i = 0; i <= segments; i++)

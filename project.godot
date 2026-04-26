@@ -41,3 +41,7 @@ p2_action={
 [rendering]
 
 renderer/rendering_method="forward_plus"
+
+[autoload]
+
+GameManager="*res://GameManager.tscn"
