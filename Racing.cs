@@ -51,6 +51,14 @@ public partial class Racing : Node2D
     private bool showResult = false;
     private Texture2D publicSafetyTexture;
     private Texture2D campusBgTexture;
+    private Texture2D professorTexture;
+    // Professor obstacle - moves side to side across both lanes
+    private float profObsX = 490f;
+    private float profObsY = 300f;
+    private float profObsSpeed = 120f;
+    private int profObsDir = 1;
+    private float profObsHitFlash1 = 0f;
+    private float profObsHitFlash2 = 0f;
 
     public override void _Ready()
     {
@@ -59,6 +67,7 @@ public partial class Racing : Node2D
         SpawnObstacleRow(rng);
         publicSafetyTexture = GD.Load<Texture2D>("res://publicsafety.png");
         campusBgTexture = GD.Load<Texture2D>("res://campus_bg.png");
+        professorTexture = GD.Load<Texture2D>("res://professor.png");
     }
 
     public override void _Process(double delta)
@@ -142,6 +151,32 @@ public partial class Racing : Node2D
             if (obs.Y > 720f) obstacles.RemoveAt(i);
         }
 
+        // Professor obstacle - moves side to side across both tracks
+        profObsX += profObsSpeed * profObsDir * dt;
+        if (profObsX > 590f) profObsDir = -1;
+        if (profObsX < 390f) profObsDir = 1;
+
+        if (profObsHitFlash1 > 0) profObsHitFlash1 -= dt;
+        if (profObsHitFlash2 > 0) profObsHitFlash2 -= dt;
+
+        // Check P1 collision with professor
+        if (!p1Finished && Mathf.Abs(profObsX - p1LanePos) < 28f && Mathf.Abs(profObsY - p1CarY) < 30f && profObsHitFlash1 <= 0)
+        {
+            p1Time += 3f;
+            p1PenaltyFlash = 1.2f;
+            p1PenaltyText = "+3s (PROF!)";
+            profObsHitFlash1 = 1.5f;
+        }
+        // Check P2 collision with professor (offset to right track)
+        float profObsX2 = profObsX + 385f;
+        if (!p2Finished && Mathf.Abs(profObsX2 - p2LanePos) < 28f && Mathf.Abs(profObsY - p2CarY) < 30f && profObsHitFlash2 <= 0)
+        {
+            p2Time += 3f;
+            p2PenaltyFlash = 1.2f;
+            p2PenaltyText = "+3s (PROF!)";
+            profObsHitFlash2 = 1.5f;
+        }
+
         QueueRedraw();
     }
 
@@ -201,6 +236,10 @@ public partial class Racing : Node2D
             DrawObstacle(obs.X, obs.Y, obs.Type);
             DrawObstacle(obs.X + 385f, obs.Y, obs.Type);
         }
+
+        // Professor obstacle
+        DrawProfessorObstacle(profObsX, profObsY, profObsHitFlash1 > 0);
+        DrawProfessorObstacle(profObsX + 385f, profObsY, profObsHitFlash2 > 0);
 
         // Cars
         bool p1Locked = Input.IsActionPressed("p1_action");
@@ -294,6 +333,22 @@ public partial class Racing : Node2D
         DrawRect(new Rect2(x + 11, y - 16, 7, 10), new Color(0.1f,0.1f,0.1f,1f));
         DrawRect(new Rect2(x - 18, y + 4, 7, 10), new Color(0.1f,0.1f,0.1f,1f));
         DrawRect(new Rect2(x + 11, y + 4, 7, 10), new Color(0.1f,0.1f,0.1f,1f));
+    }
+
+    private void DrawProfessorObstacle(float x, float y, bool hit)
+    {
+        float w = 55f, h = 55f;
+        // Flash red when hit
+        if (hit)
+            DrawRect(new Rect2(x - w/2f - 4, y - h/2f - 4, w + 8, h + 8), new Color(1f, 0.1f, 0.1f, 0.7f));
+        if (professorTexture != null)
+            DrawTextureRect(professorTexture, new Rect2(x - w/2f, y - h/2f, w, h), false);
+        else
+        {
+            DrawCircle(new Vector2(x, y), 22f, new Color(0.85f, 0.7f, 0.55f, 1f));
+            DrawString(ThemeDB.FallbackFont, new Vector2(x - 14, y + 4), "PROF", HorizontalAlignment.Left, -1, 11, new Color(1f,0.2f,0.2f,1f));
+        }
+        DrawString(ThemeDB.FallbackFont, new Vector2(x - 20, y - h/2f - 14), "⚠ PROF ⚠", HorizontalAlignment.Left, -1, 11, new Color(1f, 0.2f, 0.2f, 0.9f));
     }
 
     private void DrawResult()
