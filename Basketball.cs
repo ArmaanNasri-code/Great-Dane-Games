@@ -50,6 +50,7 @@ public partial class Basketball : Node2D
     private Texture2D courtTexture;
     private Texture2D player2Texture;
     private Texture2D ballTexture;
+    private AudioStreamPlayer _swishPlayer;
 
     public override void _Ready()
     {
@@ -59,6 +60,11 @@ public partial class Basketball : Node2D
         courtTexture = GD.Load<Texture2D>("res://basketball_court.png");
         player2Texture = GD.Load<Texture2D>("res://player2.png");
         ballTexture = GD.Load<Texture2D>("res://basketball.png");
+
+        _swishPlayer = new AudioStreamPlayer();
+        AddChild(_swishPlayer);
+        _swishPlayer.Stream = GD.Load<AudioStream>("res://swish.mp3");
+        _swishPlayer.VolumeDb = -3f;
     }
 
     private void CalcVelocity(float bx, float by, float targetX, float holdTime, out float vx, out float vy)
@@ -162,6 +168,7 @@ public partial class Basketball : Node2D
             {
                 score1++;
                 flash1Timer = 0.8f;
+                _swishPlayer.Play();
                 ball1Active = false;
                 ball1WasAboveHoop = false;
                 ball1X = player1X;
@@ -195,6 +202,7 @@ public partial class Basketball : Node2D
             {
                 score2++;
                 flash2Timer = 0.8f;
+                _swishPlayer.Play();
                 ball2Active = false;
                 ball2WasAboveHoop = false;
                 ball2X = player2X;

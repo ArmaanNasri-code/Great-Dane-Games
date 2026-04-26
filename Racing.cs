@@ -59,6 +59,7 @@ public partial class Racing : Node2D
     private int profObsDir = 1;
     private float profObsHitFlash1 = 0f;
     private float profObsHitFlash2 = 0f;
+    private AudioStreamPlayer _enginePlayer;
 
     public override void _Ready()
     {
@@ -68,6 +69,14 @@ public partial class Racing : Node2D
         publicSafetyTexture = GD.Load<Texture2D>("res://publicsafety.png");
         campusBgTexture = GD.Load<Texture2D>("res://campus_bg.png");
         professorTexture = GD.Load<Texture2D>("res://professor.png");
+
+        _enginePlayer = new AudioStreamPlayer();
+        AddChild(_enginePlayer);
+        var stream = GD.Load<AudioStream>("res://engine_rev.mp3");
+        if (stream is AudioStreamMP3 mp3) mp3.Loop = true;
+        _enginePlayer.Stream = stream;
+        _enginePlayer.VolumeDb = -8f;
+        _enginePlayer.Play();
     }
 
     public override void _Process(double delta)
@@ -112,7 +121,7 @@ public partial class Racing : Node2D
         if (!p2Finished) p2Progress += scrollSpeed * dt;
         if (p1Progress >= trackLength && !p1Finished) p1Finished = true;
         if (p2Progress >= trackLength && !p2Finished) p2Finished = true;
-        if (p1Finished && p2Finished) { gameOver = true; showResult = true; }
+        if (p1Finished && p2Finished) { gameOver = true; showResult = true; _enginePlayer.Stop(); }
 
         obstacleSpawnTimer += dt;
         if (obstacleSpawnTimer >= obstacleSpawnInterval)
