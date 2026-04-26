@@ -38,6 +38,8 @@ public partial class Basketball : Node2D
 
     private float flash1Timer = 0f;
     private float flash2Timer = 0f;
+    private bool showOvertimeFlash = false;
+    private float overtimeFlashTimer = 0f;
 
     private float p1HoldTime = 0f;
     private float p2HoldTime = 0f;
@@ -76,14 +78,24 @@ public partial class Basketball : Node2D
         timeLeft -= dt;
         if (timeLeft <= 0f)
         {
-            timeLeft = 0f;
-            gameOver = true;
-            if (GameManager.Instance != null)
+            if (score1 == score2)
             {
-                GameManager.Instance.RoundWinner = score1 >= score2 ? 1 : 2;
+                // Still tied - keep adding 15s overtime until someone wins
+                timeLeft = 15f;
+                inOvertime = true;
+                overtimeCount++;
+                showOvertimeFlash = true;
+                overtimeFlashTimer = 2.5f;
             }
-            GetTree().ChangeSceneToFile("res://RoundResult.tscn");
-            return;
+            else
+            {
+                timeLeft = 0f;
+                gameOver = true;
+                if (GameManager.Instance != null)
+                    GameManager.Instance.RoundWinner = score1 > score2 ? 1 : 2;
+                GetTree().ChangeSceneToFile("res://RoundResult.tscn");
+                return;
+            }
         }
 
         hoop1X += hoopSpeed * hoop1Dir * dt;
@@ -95,6 +107,7 @@ public partial class Basketball : Node2D
 
         if (flash1Timer > 0) flash1Timer -= dt;
         if (flash2Timer > 0) flash2Timer -= dt;
+        if (overtimeFlashTimer > 0) { overtimeFlashTimer -= dt; if (overtimeFlashTimer <= 0) showOvertimeFlash = false; }
 
         if (Input.IsActionPressed("p1_action") && !ball1Active)
         {
@@ -304,10 +317,20 @@ public partial class Basketball : Node2D
         // === ROUND 1 CENTER BOX ===
         int secs = Mathf.CeilToInt(timeLeft);
         Color timerColor = secs <= 10 ? new Color(1f, 0.2f, 0.2f, 1f) : new Color(1f, 1f, 1f, 1f);
+        Color centerTopBar = inOvertime ? new Color(0.8f, 0.1f, 0.1f, 1f) : new Color(1f, 0.84f, 0f, 1f);
+        string centerLabel = inOvertime ? $"⚡ OVERTIME {overtimeCount}" : "ROUND 1";
+        Color centerLabelColor = inOvertime ? new Color(1f, 0.3f, 0.3f, 1f) : new Color(1f, 0.84f, 0f, 1f);
         DrawRect(new Rect2(490, 10, 300, 65), new Color(0f, 0f, 0f, 0.75f));
-        DrawRect(new Rect2(490, 10, 300, 5), new Color(1f, 0.84f, 0f, 1f));
-        DrawString(ThemeDB.FallbackFont, new Vector2(560, 38), "ROUND 1", HorizontalAlignment.Left, -1, 18, new Color(1f, 0.84f, 0f, 1f));
+        DrawRect(new Rect2(490, 10, 300, 5), centerTopBar);
+        DrawString(ThemeDB.FallbackFont, new Vector2(510, 38), centerLabel, HorizontalAlignment.Left, -1, 18, centerLabelColor);
         DrawString(ThemeDB.FallbackFont, new Vector2(610, 68), $"{secs}s", HorizontalAlignment.Left, -1, 32, timerColor);
+        if (showOvertimeFlash)
+        {
+            float alpha = Mathf.Min(overtimeFlashTimer / 2.5f, 1f);
+            DrawRect(new Rect2(300, 190, 680, 110), new Color(0.5f, 0f, 0f, 0.75f * alpha));
+            DrawString(ThemeDB.FallbackFont, new Vector2(360, 255), $"+15s  OVERTIME {overtimeCount}!", HorizontalAlignment.Left, -1, 52, new Color(1f, 0.2f, 0.2f, alpha));
+            DrawString(ThemeDB.FallbackFont, new Vector2(430, 295), "Still tied — keep playing!", HorizontalAlignment.Left, -1, 22, new Color(1f, 1f, 1f, alpha));
+        }
 
         // === DANE 2 HUD BOX (top right) ===
         DrawRect(new Rect2(1090, 10, 180, 65), new Color(0f, 0f, 0f, 0.75f));
